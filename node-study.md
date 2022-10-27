@@ -46,3 +46,42 @@ npm_mirror: https://npm.taobao.org/mirrors/npm/
 如果`nvm use [version]`报错`exit status 1:乱码`
 
 则(使用管理员权限的PowerShell打开)输入`chcp 65001`之后再次输入`nvm use [version]`则可以把乱码解析
+
+#### `给node传递参数`
+
+在浏览器中，有个顶级对象叫window。里面包含了很多的东西。但是在node里，我们打印window，他是一个undefined。而在node中，他的顶级对象是是什么呢？
+
+`process`：我们可以在js文件中打印process，然后使用node运行。这个就是node中的顶级对象
+
+例如我们输入`node index.js hwh age=18`这样的命令，则我们传递的参数去哪里了呢？
+
+想这样的传递参数的方式，我们可以在process.argv中可以看到所传递的参数。他是一个数组，原本就会内置有两个元素，node程序所在路径和当前运行的文件的路径
+
+![image-20221027220321321](./node.assets/image-20221027220321321.png)
+
+#### `node中的全局对象`
+
+`__dirname`：获取当前文件所在路径
+
+`__filename`：获取当前文件所在路径及当前文件名
+
+`process`：提供了很多关于node进程中相关的对象
+
+`console`：内置有很多的方法
+
+还有很多定时器的全局对象
+
+`global对象`：类似于浏览器的window对象，但是里面内置了很多的属性与方法。与window对象不同的地方在于
+
+```javascript
+window:
+	var name = 'hwh'
+	console.log(window.name) // hwh
+	
+global:
+	var name = 'hwh'
+	console.log(global.name) // undefined
+
+// 在全局声明的一个变量或函数，都会被添加到window中。但是node环境下并不会添加到global对象中
+```
+
