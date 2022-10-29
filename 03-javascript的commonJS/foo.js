@@ -17,7 +17,7 @@ exports.age = age
 // }
 
 let a = '这是a'
-
+console.log(module)
 setTimeout(() => {
   a = 'a被改变了'
   module.exports.name = 'buzhidao'
