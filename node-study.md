@@ -134,3 +134,11 @@ CommonJS是同步的，但是ES Module是异步的。而且export {} 导出的�
    1. 那我们在导入导出文件都可以修改，但是不能修改引用地址。可以修改里边的属性或方法
    2. ![image-20221029211153324](./node.assets/image-20221029211153324.png)
 
+#### `node对ES Module的支持`
+
+![image-20221030093048848](./node.assets/image-20221030093048848.png)
+
+我们像这样使用是会报错的，为什么呢？
+
+1. 因为在node中默认支持的是CommonJS，而ES Module需要在package.jon中配置`type: module`
+2. 或者文件名使用`.mjs`结尾，表示这是ES Module的模块
