@@ -308,3 +308,74 @@ copyFiles(oldFilePath, newFilePath)
 
 ```
 
+### `包管理工具`
+
+如果将我们的代码给分享出去供别人使用呢？
+
+可以将我们的代码上传到GitHub，或者使用专业的包管理工具，然后将代码发布到特定的位置，供别人下载。目前可以通过npm来实现这一方式
+
+#### `npm`
+
+通过npm管理的包可以在https://www.npmjs.org进行查看，搜索
+
+则我们通过npm发布的代码是保存在registry上的。
+
+当我们使用在终端输入`npm init -y`时，会在此文件夹下创建一个package.json文件作为项目配置文件
+
+##### `package.json常见属性`
+
+1. name: 项目的名称
+2. version：当前项目的版本号
+3. description：项目的基本描述
+4. author：作者相关信息
+5. license：开源协议(发布时需要用到)
+6. private：记录当前项目是否是私有的。值为true时，使用发布命令时不能发布出去的
+7. main：设置程序的入口，这一入口主要应用于别人使用我们的包时，`const axios = require('axios')`的入口。与webpack设置的入口是两回事
+8. script：配置脚本命令，以键值对的方式存在，配置后以`npm run key`的方式运行。有一些固定的key可以省略run。例如start，build，test等
+9. dependencies：指定无论是开发环境还是生产环境我们都需要依赖的包
+10. devDependencies：指定在生产环境不需要依赖的包
+11. engines：用于指定node和npm的版本，在安装的过程中，会先检查对应的引擎版本，不符合则报错
+12. browserslist：用于配置打包后的js代码兼容浏览器的情况
+
+##### `版本管理`
+
+通常我们安装的包的依赖版本都会出现~1.2.3或^1.2.3他的规范主要是X.Y.Z：
+
+1. X：主版本号，当做了不兼容的API的修改时，需要修改这个值
+2. Y：次版本号，当做了向下兼容，且有新功能新增时，需要修改这个值
+3. Z：修订号：没有新功能，修复了之前的版本的bug时需要修改
+
+^表示X是不变的，y和z永远安装最新的版本
+
+~表示y和x保持不变，z永远安装最新的版本
+
+##### `npm install原理`
+
+![image-20221101223841501](./node.assets/image-20221101223841501.png)
+
+`解析`
+
+检测是有否package-lock.json文件： 
+
+1. 没有lock文件
+   1. 分析依赖关系，这是因为我们可能包会依赖其他的包，并且多个包之间会产生相同依赖的情况；
+   2.  从registry仓库中下载压缩包（如果我们设置了镜像，那么会从镜像服务器下载压缩包）； 
+   3. 获取到压缩包后会对压缩包进行缓存（从npm5开始有的）； 
+   4. 将压缩包解压到项目的node_modules文件夹中。然后生成package-lock.json文件
+2. 有lock文件 
+   1. 检测lock中包的版本是否和package.json中一致（会按照semver版本规范检测）； 
+      1. 不一致，那么会重新构建依赖关系，直接会走顶层的流程；
+   2. 一致的情况下，会去优先查找缓存 
+      1. 没有找到，会从registry仓库下载，直接走顶层流程； 
+   3. 查找到，会获取缓存中的压缩文件，并且将压缩文件解压到node_modules文件夹中；
+
+##### `package-lock.json文件解析`
+
+1. name：项目的名称
+2. version：项目的版本
+3. lockfileVersion：lock文件的版本
+4. requires：使用requires来管理模块的依赖关系
+5. devDependencies：项目的依赖
+6. resolved：在registry仓库的下载地址
+7. integrity：从缓存中获取索引，在通过索引去获取压缩文件，最后解压到当前项目的node_modules。终端输入`npm config get cache`就能查看到缓存路径，然后找这个文件
+8. ![image-20221102213909688](./node.assets/image-20221102213909688.png)
