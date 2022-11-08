@@ -379,3 +379,17 @@ copyFiles(oldFilePath, newFilePath)
 6. resolved：在registry仓库的下载地址
 7. integrity：从缓存中获取索引，在通过索引去获取压缩文件，最后解压到当前项目的node_modules。终端输入`npm config get cache`就能查看到缓存路径，然后找这个文件
 8. ![image-20221102213909688](./node.assets/image-20221102213909688.png)
+
+### `实现自己的脚手架工具`
+
+首先得创建一个入口文件`index.js`文件。然后`npm init -y`生成package.json文件。然后在入口文件添加指令
+
+`#!/usr/bin/env node`。修改package.json命令`bin: { hwh: index.js }`。最后输入npm link。此时再输入终端再输入`hwh`就能识别了
+
+1. `#!/usr/bin/env node`：#！表示这个文件可以当作脚本运行，怎么运行呢？`/usr/bin/env node`这个的意思就是用node来执行这个文件，去用户(usr)的安装根目录`bin`下的env环境变量中去找
+2. `bin: {hwh: index.js}`：添加hwh的环境变量
+
+安装`commander`
+
+![image-20221108231908179](./node.assets/image-20221108231908179.png)
+
