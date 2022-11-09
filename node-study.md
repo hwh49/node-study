@@ -393,3 +393,53 @@ copyFiles(oldFilePath, newFilePath)
 
 ![image-20221108231908179](./node.assets/image-20221108231908179.png)
 
+#### `自定义命令`
+
+```javascript
+const program = require('commander')
+
+const createCommands = () => {
+  program
+      .command('create <project> [others...]') // 创建指令 create表示指令 <project>是参数，<>表示必选的，project则是参数名称 []表示可选的 ...表示可变的。...只能用于最后一个参数
+      .description('clone a repository into a folder') // 指令描述
+      .action((project, others) => {
+        // project是终端输入的必选的参数 others则是终端输入的可选可变的参数，是一个数组
+        console.log(project, others)
+      })
+}
+
+module.exports = createCommands
+
+// 随后在index.js文件导入这个函数，使用即可
+例如在终端输入 hwh create demo abc cba
+此时log的project为 demo others为[abc,cba]
+```
+
+#### `配置下载模板`
+
+```javascript
+const {promisify} = require('util') // 将一个普通函数转换为promise
+const {vueRepo} = require('../config/repo-config') // 下载地址
+const download = promisify(require('download-git-repo')) // 将原本的函数转为promise
+const createProjectAction = async (project) => {
+  // 1. clone项目模板
+  await download(vueRepo, project, {clone: true}) // project表示clone到哪个目录，clone：true表示也clone git记录等
+  // 2. 执行 npm install
+  // 3. 运行npm run serve
+  // 4. 打开浏览器
+}
+
+module.exports = {
+  createProjectAction
+}
+
+
+// repo-config
+let vueRepo = 'direct:https://github.com/coderwhy/hy-vue-temp.git'
+
+module.exports = {
+  vueRepo
+}
+
+```
+
