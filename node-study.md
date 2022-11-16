@@ -443,3 +443,59 @@ module.exports = {
 
 ```
 
+##### `还配置了创建组件，npm install等命令。具体看HWH_CLI文件夹`
+
+### `BUffer`
+
+在计算机中，所有的内容最终都会被转换成为二进制来表示，而JavaScript是不能处理二进制的，但是node需要与二进制打交道。所以就提供了一个buffer的全局类，供js去操作二进制数据
+
+那么buffer是怎么储存二进制数据的呢？
+
+​	我们可以把它当作一个数组，这个数组中的每一项可以保存8位的二进制。而8位为一个单元
+
+​	所以1个字节=8比特
+
+```javascript
+const message = 'hello'
+const msg = '你好啊'
+// 1. 编码 使用new Buffer.from方法可以把字符串编码成buffer, 第二个参数为编码方法 默认为utf8
+const buffer = new Buffer.from(message)
+
+// 2. 解码 使用toString()进行解码 默认解码方式为utf8
+const str = buffer.toString()
+console.log(str)
+
+// 编码和解码的方式必须一直，否则就会变成乱码
+const buffer2 = new Buffer.from(msg, 'utf16le')
+const str2 = buffer2.toString('utf16le')
+console.log(str2)
+
+```
+
+#### `创建空的buffer`
+
+```javascript
+const buffer = Buffer.alloc(8) // 创建一个空的buffer 里面的数据都为 00
+buffer[0] = 11 // 可以通过索引的方式去修改buffer
+console.log(buffer)
+
+```
+
+#### `读取buffer并修改`
+
+```javascript
+const fs = require("fs");
+const sharp = require('sharp')
+fs.readFile('./xiaochou2.jpg', (err, data) => {
+  console.log(data) // data是一个buffer 没有指定解码方式 默认为encoding: utf-8
+})
+
+// 使用sharp三方库对buffer做一些修改，然后写入文件
+sharp('./xiaochou2.jpg') // 读取文件 返回buffer
+    .resize(200, 200) // 修改大小
+    .toFile('./xc.jpg', (err, info) => {
+      console.log(info) // 写入文件
+    })
+
+```
+

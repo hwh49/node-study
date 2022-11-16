@@ -16,7 +16,7 @@ const createProjectAction = async (project) => {
   // 3. 运行npm run serve
   await commandSpawn(command, ['run', 'serve'], {cwd: `./${project}`})
   // 4. 打开浏览器
-  open("http://localhost:8080/")
+  // open("http://localhost:8080/")
 }
 
 // 添加组件
