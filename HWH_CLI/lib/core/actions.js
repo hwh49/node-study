@@ -2,7 +2,7 @@ const {promisify} = require('util') // 将一个普通函数转换为promise
 const {vueRepo} = require('../config/repo-config')
 const {commandSpawn} = require("../utils/terminal");
 const {compile, writeToFile} = require("../utils/utils");
-const path = require("path"); // 下载地址
+const path = require("path");
 const download = promisify(require('download-git-repo')) // 将原本的函数转为promise
 
 // 拉取模板-> npm install -> 运行 -> 打开浏览器
