@@ -1,4 +1,4 @@
-let vueRepo = 'direct:https://gitee.com/hewanhua/vue-cli-template.git#master'
+let vueRepo = 'https://gitee.com/hewanhua/vue-cli-template.git'
 
 module.exports = {
   vueRepo

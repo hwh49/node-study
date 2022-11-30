@@ -3,16 +3,27 @@ const {vueRepo} = require('../config/repo-config')
 const {commandSpawn} = require("../utils/terminal");
 const {compile, writeToFile} = require("../utils/utils");
 const path = require("path");
-const download = promisify(require('download-git-repo')) // 将原本的函数转为promise
+const fs = require("fs");
+const child_process = require('child_process')
 
 // 拉取模板-> npm install -> 运行 -> 打开浏览器
 const createProjectAction = async (project) => {
   console.log('hwh is clone template')
   // 1. clone项目模板
-  await download(vueRepo, project, {clone: true}) // project表示clone到哪个目录，clone：true表示也clone git记录等
+  await child_process.execSync(`git clone -b master ${vueRepo} ${project}`)
+  // 判断使用什么分隔符后 拼接出当前终端所在路径
+  const pathSplit = process.platform === 'win32' ? '\\' : '/'
+  const clonePath = process.cwd() + pathSplit + project + pathSplit + 'package.json'
+
+  // 读取到package.json文件后修改name文件再写入
+  let content = JSON.parse(fs.readFileSync(clonePath, {encoding: 'utf8'}))
+  content.name = project
+  fs.writeFileSync(clonePath, JSON.stringify(content))
+
   // 2. 执行 npm install
   const command = process.platform === 'win32' ? 'npm.cmd' : 'npm'
   await commandSpawn(command, ['install'], {cwd: `./${project}`})
+
   // 3. 运行npm run serve
   await commandSpawn(command, ['run', 'serve'], {cwd: `./${project}`})
   // 4. 打开浏览器

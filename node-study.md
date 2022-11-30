@@ -543,3 +543,176 @@ setTimeout调用了web api，会在合适的时机，把回调函数加入到浏
 1. 首先执行顶层script宏任务(同步代码)，遇到微任务或宏任务时，先推入对应的事件队列
 2. 执行完同步代码后，执行微任务队列，如果此时的微任务中有宏任务或微任务时，也是推入对应的事件队列
 3. 执行完微任务后，执行宏任务，如果里边有微任务，那么执行完当前这一个宏任务，会先去执行微任务，确保微任务队列内没有任务之后才会继续执行宏任务
+
+#### `node架构`
+
+浏览器的event loop是根据HTML5定义的规范来实现的，不同的浏览器有不同的实现，而node中是由libuv实现的
+
+libuv中主要维护了一个event loop和worker threas(线程池)，event loop负责调用系统的一些其他操作：文件的IO，network，child-process等
+
+##### `阻塞IO和非阻塞IO`
+
+我们任何程序中的文件操作都是需要进行系统调用(操作系统的文件系统)，事实上对文件的操作，是一个操作系统的IO操作
+
+1. 阻塞式调用：调用结果返回之前，当前线程处于阻塞态(阻塞态CPU是不会分配时间片的)，调用线程只有在得到调用结果之后才会继续执行
+2. 非阻塞式调用：调用执行之后，当前线程不会停止执行，只需要过一段时间来检查一下有没有返回结果即可
+
+非阻塞IO的问题：如果我们没有读取到结果，那就意味着我们需要频繁的去确定读取到的数据是否是完整的，这个过程我们称之为轮询操作
+
+而这个轮询操作的工作就需要libuv的线程池来执行，线程池会负责所有相关的操作，并且通过轮询等方式等待结果，当获取到结果时，就可以将对应的回调放到事件循环中，事件循环就可以负责接管后续的回调工作，告知JavaScript应用程序执行对应的回调函数
+
+##### `阻塞和非阻塞，同步和异步的区别`
+
+- 阻塞和非阻塞是对应被调用者来说的，例如操作系统就是被调用者
+- 同步和异步是对于调用者来说，我们自己的程序就是被调用者
+
+libuv采用的就是非阻塞异步IO的调用方式
+
+### node事件循环阶段
+
+一次完成的事件循环Tick会分成很多个阶段：
+
+1. 定时器：本阶段执行已经被setTimeout和setInterval的调度回调函数
+2. 待定回调：对某些系统操作执行回调，比如TCP连接时接收到ECONNREFUSED
+3. idle，prepare：仅系统内部使用
+4. 轮询：检索新的IO事件，执行与IO相关的回调
+5. 检测：setImmediate回调函数在这里执行
+6. 关闭回调函数：一些关闭的回调函数，如监听的close
+
+#### node的微任务和宏任务
+
+node的事件循环更复杂，它也分为微任务和宏任务
+
+1. 宏任务：setTimeout,setInterval,IO事件，setImmediate，close事件
+2. 微任务：promise的then回调，process.nextTick，queueMicrotask
+
+执行的顺序：
+
+1. next tick queue：process.nextTick
+2. other queue：Promise的回调，queueMicrotask
+3. timer queue：setTimeout，setInterval
+4. poll queue：IO事件
+5. check queue：setImmediate
+6. close queue：close事件
+
+### Stream
+
+stream：流。程序中的流，就是当我们在一个文件读取数据时，文件的二进制数据会源源不断的被读取到我们的程序中，而这一连串的字节，就是我们程序中的流
+
+所以我们可以这样理解流：
+
+1. 是连续字节的一种表现形式和抽象概念
+2. 流应该是可读的，也是可写的
+
+而我们之前使用的readFile或者writeFile方式读写文件，为什么还需要流呢？
+
+- 直接读写文件的方式，虽然简单，但是无法控制一些细节的操作
+- 比如从什么位置开始读，读到什么位置，一次性读多少个字节
+- 读到某个位置后，暂停读取，某个时刻恢复读取
+- 或者这个文件非常大，比如一个视频文件，一次性全部读取并不合适
+
+事实上node中有很多对象是基于流实现的，nodejs中有四种基本流类型：
+
+1. writable：可以向其写入数据的流(例如fs.createWriteStream)
+2. readable：可以从中读取数据的流(例如fs.createReadStream)
+3. Duplex：同时为Readable和writeable的流(例如net.socket)
+4. Transform：Duplex可以在写入和读取数据时修改或者转换数据的流(例如zlib.createDeflate)
+
+#### readable的使用
+
+```javascript
+const fs = require('fs')
+
+// 传统的读取文件 这种方式一次性将一个文件中所有的内容都读取到程序中
+// fs.readFile('./foo', (err, data) => {
+//   console.log(data) // buffer
+// })
+
+// 创建一个流
+const read = fs.createReadStream('./foo', {
+  start: 2, // 开始位置
+  end: 6, // 结束位置
+  highWaterMark: 2 // 一次读取多少
+})
+
+// 监听读取到数据
+read.on('data', (data) => {
+  console.log(data)
+
+  read.pause()
+
+  setTimeout(() => {
+    read.resume()
+  }, 2000)
+})
+
+read.on('open', (fd) => {
+  console.log('文件被打开')
+})
+
+read.on('end', () => {
+  console.log('文件读取结束')
+})
+
+read.on('close', () => {
+  console.log('文件被关闭')
+})
+
+```
+
+#### writable的使用
+
+```javascript
+const fs = require('fs')
+
+// 传统方式写入
+// fs.writeFile('./bar', '写入的内容', err => {
+//   if (err) return console.log('写入失败')
+// })
+
+// writable的使用
+const writer = fs.createWriteStream('./bar', {
+  flags: 'a',
+  start: 2
+})
+
+// writer.write('hwh', error => {
+//   if (error) return console.log('写入失败')
+// })
+
+// 如果没有执行这个函数，管道是一直开启的
+// writer.close()
+
+// 没有调用close，finish和close都不会触发
+writer.on('finish', () => {
+  console.log('文件写入结束')
+})
+
+writer.on('close', () => {
+  console.log('文件关闭')
+})
+
+// end事件相当于做了write函数和close函数
+writer.end('hello hwh')
+```
+
+#### pipe的使用
+
+```javascript
+const fs = require('fs')
+
+const reader = fs.createReadStream('./foo')
+const writer = fs.createWriteStream('./abc')
+
+// 拿到读取流，然后直接调用写入流的方法把数据写入
+// reader.on('data', (data) => {
+//   console.log(data)
+//   writer.end(data)
+//
+// })
+
+// pipe方法可以将读取到的输入流手动的放到输出流中进行写入
+reader.pipe(writer)
+
+```
+
