@@ -716,3 +716,74 @@ reader.pipe(writer)
 
 ```
 
+### http模块
+
+什么是web服务器？
+
+当应用程序需要某一个资源时，可以向一台服务器，通过http请求获取到这个资源，提供资源的这个服务器，就是一台web服务器
+
+```javascript
+const http = require('http')
+
+// 创建一个服务
+const server = http.createServer((req, res) => {
+  res.end('hello world')
+})
+
+// 监听端口
+server.listen(8000, () => {
+  console.log('8000端口已启动')
+})
+
+```
+
+#### 创建服务器的方式与监听
+
+```javascript
+const http = require('http')
+
+// 创建服务的第一种方式
+const server = http.createServer((req, res) => {
+  res.end('hello world')
+})
+
+// 创建服务的第二种方式
+const serve2 = new http.Server((req, res) => {
+  res.end('server2')
+})
+
+// 监听端口
+// server.listen(8000, () => {
+//   console.log('8000端口已启动')
+// })
+
+// localhost 默认会被解析为127.0.0.1 不指定的时候默认分配为0.0.0.0,为0.0.0.0的时候，使用localhost或者自己的电脑的ip地址都能访问到
+server.listen(8000,'127.0.0.1', () => {
+  console.log('8000端口已启动')
+})
+
+// serve2.listen(() => {
+//   // console.log('8001端口已启动')
+//   console.log(serve2.address().port) // serve2.address().port当我们没有指定端口号时，默认会分配空闲的端口号，而我们可以通过这种方式来获取端口号
+// })
+
+serve2.listen(8001, '192.168.1.10', () => {
+  console.log('8001端口已启动')
+})
+
+```
+
+创建服务器时，不管使用createServer还是new http.Server。在他的底层都是运用的new http
+
+监听主机和端口号
+
+​	通过listen函数来监听端口号，他有三个参数，都是可选的
+
+- port：端口号，可以不传。不传时，系统会默认分配端口，而在项目中是通过环境变量的映射
+- host：主机，通常可以传入localhost，自己电脑的ip地址，或者0.0.0.0。默认是0.0.0.0。可以被localhost和IP地址访问到
+  - localhost：本质上是一个域名，通常情况下会被解析为127.0.0.1
+  - 127.0.0.1：回环地址，表达的意思是我们主机自己发出去的包，直接被自己接收
+    - 正常的数据库包是：应用层 -> 传输层 -> 网络层 -> 数据链路层 -> 物理层
+    - 而回环地址，是直接在网络层就被获取到了
+  - 0.0.0.0：监听IPV4上所有的地址，再根据不同的端口找到不同的应用程序
+- 回调函数：服务启动成功会执行的函数
