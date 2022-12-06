@@ -787,3 +787,148 @@ serve2.listen(8001, '192.168.1.10', () => {
     - 而回环地址，是直接在网络层就被获取到了
   - 0.0.0.0：监听IPV4上所有的地址，再根据不同的端口找到不同的应用程序
 - 回调函数：服务启动成功会执行的函数
+
+#### url的处理
+
+客户端在发送请求时，会请求不同的数据，那么会传入不同的地址：
+
+例如http://localhost:8000/login    http://localhost:8000/regiset
+
+服务器需要根据不同的请求地址做出不同的响应
+
+```javascript
+const http = require('http')
+const url = require('url')
+const qs = require('querystring')
+
+const server = http.createServer((req, res) => {
+  // url.parse去解析url中的信息
+  const {pathname, query} = url.parse(req.url)
+  // if (pathname === '/login') {
+  //   res.end('登录信息')
+  // } else if (pathname === '/register') {
+  //   res.end('注册成功')
+  // } else if (pathname === '/users') {
+  //   res.end('用户列表')
+  // } else {
+  //   res.end('参数有问题')
+  // }
+  if (pathname === '/login') {
+    console.log(query)
+    console.log(qs.parse(query))
+    const {username, password} = qs.parse(query)
+    console.log(username, password)
+    res.end('请求结果')
+  }
+
+})
+
+server.listen(8000, () => {
+  console.log('8000端口启动成功')
+})
+
+```
+
+#### method的处理
+
+在restful规范中，我们对于数据的增删改查应该通过不同的请求方式：
+
+- GET：查询数据
+- POST：新建数据
+- PATCH：更新数据
+- DELETE：删除数据
+
+所以我们可以通过判断不同的请求方式进行不同的处理
+
+```javascript
+const qs = require('querystring')
+const http = require('http')
+const url = require('url')
+const server = http.createServer((req, res) => {
+  const {pathname} = url.parse(req.url)
+  if (pathname === '/login') {
+    if (req.method === 'POST') {
+      // post请求参数在body中
+      req.setEncoding('utf-8') // setEncoding 设置解析的编码格式
+      req.on('data', (data) => {
+
+        /*
+         *  qs.parse 与 JSON.parse的区别
+         *    qs.parse是用于转换 username=hwh&password=123 这种形式的字符串
+         *    JSON.parse是用于转换 {username: hwh, password: 123} 这种形式的字符串
+         */
+
+        const {username, password} = JSON.parse(data)
+        console.log(username, password)
+        res.end(`Hello ${username}`)
+      })
+
+    } else {
+      res.end('请求的方法不对')
+    }
+  }
+})
+
+server.listen(8888, () => {
+  console.log('8888端口启动成功')
+})
+
+
+```
+
+#### headers的处理
+
+在request对象中的headers也包含很多有用的信息，客户端会默认传递过来一下信息
+
+```javascript
+{
+  'content-type': 'application/json',
+   表示这次请求携带的类型
+    application/json表示是JSON类型
+    text/plain表示是文本类型
+    application/xml表示是xml类型
+    multipart/form-data表示是上传文件
+  'user-agent': 'PostmanRuntime/7.29.2',
+      客户端相关的信息
+  accept: '*/*',
+      告知服务器，客户端可接受的文件格式类型
+  'postman-token': 'ba649cfb-59b4-480e-b604-9aed80e9e1c3',
+      token信息
+  host: '127.0.0.1:8000',
+      客户端主机
+  'accept-encoding': 'gzip, deflate, br',
+      告知服务器，客户端支持的文件压缩格式
+  connection: 'keep-alive',
+      表示与服务器建立连接，默认是connection: 'keep-alive'，当数据传输完成，还没中断连接时，node服务器会默认等待5s，然后中断
+  'content-length': '51'
+    为文件的大小和长度，例如在上传一个比较大的音频或者图片时，监听data事件是无法一下就能全部读取到的，此时可以用这个长度做判断
+}
+
+```
+
+#### 设置响应状态码与响应头
+
+```javascript
+const http = require('http')
+
+const server = http.createServer((req, res) => {
+  // 1. 设置相应状态码的两种方式
+  // res.statusCode = 500
+  // res.writeHead(403)
+
+  // 2. 设置响应头的两种方式 浏览器会根据对应的头信息去对响应进行对应的处理
+  //serHeader 一次只能设置一个头部信息
+  // res.setHeader("Content-Type", "application/json; charset=utf8")
+  res.writeHead(200, {
+    // "Content-Type": "application/json;charset=utf8"
+    "Content-Type": "text/html;charset=utf8"
+  })
+  res.end('<h2>hello word</h2>')
+})
+
+server.listen(8800, () =>{
+  console.log('8800已启动')
+})
+
+```
+
