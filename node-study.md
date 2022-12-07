@@ -932,3 +932,123 @@ server.listen(8800, () =>{
 
 ```
 
+#### 使用http发送请求
+
+开发的node服务器中，我们也可以进行发送请求。在node中使用http模块进行发请求
+
+```javascript
+const http = require('http')
+
+// http发送get请求
+// http.get('http://localhost:8000', (res) => {
+//   // 需要监听事件，才能获取到请求结果
+//   res.on('data', (data)=> {
+//     console.log(data.toString())
+//   })
+//   res.on('end', () => {
+//     console.log('获取到所有的结果')
+//   })
+// })
+
+// http发送post请求 发送除get请求外的所有请求都得以这种形式
+const req = http.request({
+  method: 'POST',
+  pathname: 'http://localhost',
+  port: 8000
+}, res => {
+  res.on('data', data => {
+    console.log(data.toString())
+  })
+  res.on('end', () => {
+    console.log('获取到了所有结果')
+  })
+
+})
+
+req.end()  // 结束请求
+
+
+```
+
+#### 文件上传
+
+```javascript
+const http = require('http')
+const url = require('url')
+const qs = require('querystring')
+const fs = require('fs')
+
+const server = http.createServer((req,res) => {
+  const { pathname } = url.parse(req.url)
+  if (pathname === '/upload') {
+    if (req.method === 'POST') {
+      req.setEncoding('binary') // 把流转换成二进制的
+      // 获取到boundary后面的信息
+      let boundary = req.headers['content-type'].split('; ')[1].replace('boundary=', '')
+      let body = '' // 拼接文件
+
+      req.on('data', data => {
+        // console.log(data.toString())
+        body += data
+      })
+      // 因为文件过大时，在data事件里边不能监听到所有的文件流 所以不适合在data事件里边写入
+      req.on('end', () => {
+        const payload = qs.parse(body, '\r\n', ':')
+        console.log(payload, 'payload')
+        const fileType = payload['Content-Type'].substring(1)
+        const fileTypePosition = body.indexOf(fileType) + fileType.length
+        let binaryData = body.substring(fileTypePosition)
+        binaryData = binaryData.replace(/^\s\s*/, '')
+        const fileData = binaryData.substring(0, binaryData.indexOf(`--${boundary}--`))
+        fs.writeFile('./foo.jpg', fileData, 'binary', err => {
+          console.log(err)
+          console.log('文件上传完成')
+        })
+      })
+      res.end('请求完成')
+    }
+  }
+
+})
+
+server.listen(8000, () => {
+  console.log('8000端口已启动')
+})
+
+```
+
+### express
+
+我们不是可以用node内置的http模块搭建web服务器吗？为什么还需要使用框架？
+
+- 原生http在进行很多处理时，会较为复杂
+- 有URL判断，method判断，参数处理一堆东西需要我们自己来封装
+- 并且所有的东西都放在一起，会非常的混乱
+
+目前在node中比较流行的web服务器框架是express，koa。express早于koa出现，并且在node社区中迅速的流行起来。我们可以基于express快速，方便的开发自己的web服务器
+
+`Express`整个框架的核心就是中间件，理解了中间件其他的一切都非常简单
+
+使用express简单搭建web服务器
+
+```javascript
+const express = require('express')
+
+// 创建服务器
+const app = express()
+
+// 监听路径 这种方式只能监听到get的请求并且请求路径为 /
+app.get('/', (req, res, next) => {
+  res.end('hello express')
+})
+
+// 监听post请求并且路径为 /login
+app.post('/login', (req, res, next) => {
+  res.end('登陆请求')
+})
+
+app.listen(8000, () => {
+  console.log('服务器启动成功~~~')
+})
+```
+
