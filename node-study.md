@@ -1149,3 +1149,135 @@ app.listen(8000, () => {
 
 ```
 
+##### 响应结果
+
+```javascript
+const express = require('express')
+
+// 创建服务器
+const app = express()
+
+app.post('/login', (req, res, next) => {
+  // 设置状态码
+  res.status(204)
+
+  // res.end只能返回string或者buffer
+  // 返回JSON格式可以用json方法
+  // res.json({name: 'hwh', age: 18})
+
+  // 或者使用type方法设置返回值格式
+  res.type('application/json')
+  res.end(JSON.stringify({name: 'hwh', age: 18}))
+})
+
+app.listen(8000, () => {
+  console.log('服务器启动成功~~~')
+})
+
+```
+
+##### 路由
+
+如果我们将所有的代码逻辑都写在app中，那么app会变得越来越复杂
+
+一方面完整的web服务器包含非常多的处理逻辑，另一方面有些处理逻辑是一个整体，我们应该将它们放在一起：例如对`user`路径的处理：
+
+- 获取用户列表
+- 获取某一个用户信息
+- 创建一个新的用户
+- 删除一个用户
+- 更新一个用户
+
+我们可以使用`express.Router`来创建一个路由处理程序，一个Router实例拥有完整的中间件和路由系统，因此他也被称为迷你应用程序
+
+```javascript
+// users.js
+const express = require('express')
+// Router注册路由实例
+const userRouter = express.Router()
+
+userRouter.get('/', (req, res, next) => {
+  res.json(['hwh', 'ldh', 'hr'])
+})
+
+userRouter.post('/', (req, res, next) => {
+  res.end('创建用户成功')
+})
+
+userRouter.delete('/:id', (req, res, next) => {
+  res.end(`删除${req.params.id}成功`)
+})
+
+module.exports = userRouter
+
+// 路由.js
+const express = require('express')
+const useRouter = require('./Routes/users')
+
+const app = express()
+// 中间件函数直接使用路由实例
+app.use('/user', useRouter)
+
+app.listen(8000, () => {
+  console.log('路由服务器启动成功')
+})
+
+```
+
+##### 错误处理
+
+```javascript
+const express = require('express')
+
+// 创建服务器
+const app = express()
+
+const LOGIN_ERROR = 'user does not exist'
+const REGISTER_ERROR = 'Registration failed'
+
+app.get('/login', (req, res, next) => {
+  const isLogin = true
+  if (!isLogin) {
+    res.end('登陆成功')
+  } else {
+    // next只要是有参数，那一定是错误信息
+    next(new Error(LOGIN_ERROR))
+  }
+})
+
+
+app.post('/register', (req, res, next) => {
+  const isRegister = true
+  if (!isRegister) {
+    res.end('注册成功')
+  } else {
+    next(new Error(REGISTER_ERROR))
+  }
+})
+
+app.use((err,req, res, next) => {
+  let status = 400
+  let message = ''
+  switch (err.message) {
+    case LOGIN_ERROR:
+      message = LOGIN_ERROR
+      break;
+    case REGISTER_ERROR:
+      message = REGISTER_ERROR
+      break;
+    default:
+      message = 'corresponding path could not be found'
+  }
+  res.status(status)
+  res.json({
+    status,
+    message
+  })
+})
+
+app.listen(8000, () => {
+  console.log('错误处理服务器启动成功~~~')
+})
+
+```
+
