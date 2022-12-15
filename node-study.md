@@ -1149,3 +1149,257 @@ app.listen(8000, () => {
 
 ```
 
+##### 响应结果
+
+```javascript
+const express = require('express')
+
+// 创建服务器
+const app = express()
+
+app.post('/login', (req, res, next) => {
+  // 设置状态码
+  res.status(204)
+
+  // res.end只能返回string或者buffer
+  // 返回JSON格式可以用json方法
+  // res.json({name: 'hwh', age: 18})
+
+  // 或者使用type方法设置返回值格式
+  res.type('application/json')
+  res.end(JSON.stringify({name: 'hwh', age: 18}))
+})
+
+app.listen(8000, () => {
+  console.log('服务器启动成功~~~')
+})
+
+```
+
+##### 路由
+
+如果我们将所有的代码逻辑都写在app中，那么app会变得越来越复杂
+
+一方面完整的web服务器包含非常多的处理逻辑，另一方面有些处理逻辑是一个整体，我们应该将它们放在一起：例如对`user`路径的处理：
+
+- 获取用户列表
+- 获取某一个用户信息
+- 创建一个新的用户
+- 删除一个用户
+- 更新一个用户
+
+我们可以使用`express.Router`来创建一个路由处理程序，一个Router实例拥有完整的中间件和路由系统，因此他也被称为迷你应用程序
+
+```javascript
+// users.js
+const express = require('express')
+// Router注册路由实例
+const userRouter = express.Router()
+
+userRouter.get('/', (req, res, next) => {
+  res.json(['hwh', 'ldh', 'hr'])
+})
+
+userRouter.post('/', (req, res, next) => {
+  res.end('创建用户成功')
+})
+
+userRouter.delete('/:id', (req, res, next) => {
+  res.end(`删除${req.params.id}成功`)
+})
+
+module.exports = userRouter
+
+// 路由.js
+const express = require('express')
+const useRouter = require('./Routes/users')
+
+const app = express()
+// 中间件函数直接使用路由实例
+app.use('/user', useRouter)
+
+app.listen(8000, () => {
+  console.log('路由服务器启动成功')
+})
+
+```
+
+##### 错误处理
+
+```javascript
+const express = require('express')
+
+// 创建服务器
+const app = express()
+
+const LOGIN_ERROR = 'user does not exist'
+const REGISTER_ERROR = 'Registration failed'
+
+app.get('/login', (req, res, next) => {
+  const isLogin = true
+  if (!isLogin) {
+    res.end('登陆成功')
+  } else {
+    // next只要是有参数，那一定是错误信息
+    next(new Error(LOGIN_ERROR))
+  }
+})
+
+
+app.post('/register', (req, res, next) => {
+  const isRegister = true
+  if (!isRegister) {
+    res.end('注册成功')
+  } else {
+    next(new Error(REGISTER_ERROR))
+  }
+})
+
+app.use((err,req, res, next) => {
+  let status = 400
+  let message = ''
+  switch (err.message) {
+    case LOGIN_ERROR:
+      message = LOGIN_ERROR
+      break;
+    case REGISTER_ERROR:
+      message = REGISTER_ERROR
+      break;
+    default:
+      message = 'corresponding path could not be found'
+  }
+  res.status(status)
+  res.json({
+    status,
+    message
+  })
+})
+
+app.listen(8000, () => {
+  console.log('错误处理服务器启动成功~~~')
+})
+
+```
+
+### koa
+
+koa也是一个非常流行的node web服务器框架
+
+使用
+
+```javascript
+const Koa = require('koa')
+
+const app = new Koa()
+
+app.use((ctx, next) => {
+  // context(ctx)把request和response都封装在里面了
+  // 并且body方法替代了end 
+  ctx.response.body = 'hello world'
+})
+
+app.listen(8000, () => {
+  console.log('koa初体验服务器启动成功')
+})
+
+```
+
+##### 中间件
+
+```javascript
+const Koa = require('koa')
+
+const app = new Koa()
+
+// koa的中间件没有.get, .post等等之类的请求， 也不能连续注册中间件，第一个参数也不能设置为路径
+// 只能通过use的方法注册
+app.use((ctx, next) => {
+  if (ctx.request.path === '/users') {
+    if (ctx.request.method === 'POST') {
+      ctx.response.body = 'create user Success~~'
+    } else {
+      ctx.response.body = 'user lists~~'
+    }
+  } else {
+    ctx.response.body = 'other request Response'
+  }
+})
+
+app.listen(8000, () => {
+  console.log('koa中间件服务器启动成功')
+})
+
+```
+
+##### 路由
+
+koa官方并没有提供路由的库，需要借助于第三方库`npm install koa-router`
+
+```javascript
+const Router = require('koa-router')
+
+const userRouter = new Router({prefix: '/users'}) // prefix 设置路径
+
+userRouter.get('/', (ctx, next) => {
+  ctx.response.body = 'user list~~'
+})
+
+userRouter.post('/', (ctx, next) => {
+  ctx.response.body = 'create user info~~'
+})
+
+module.exports = userRouter
+
+// 使用
+const Koa = require('koa')
+const userRouter = require('./router/user')
+
+const app = new Koa()
+app.use(userRouter.routes()) // 使用路由中间件
+app.use(userRouter.allowedMethods()) // 不支持的方法(例如post, put)会自动返回对应的错误信息
+
+app.listen(8000, () => {
+  console.log('koa路由服务器启动成功')
+})
+
+```
+
+##### 解析参数
+
+```javascript
+const Koa = require('koa')
+const Router = require('koa-router')
+const bodyParser = require('koa-bodyparser')
+const multer = require('koa-multer')
+
+const userRouter = new Router({prefix: '/users'})
+const app = new Koa()
+const upload = multer({})
+
+// 解析query and params
+userRouter.get('/:id', (ctx, next) => {
+  console.log(ctx.params)
+  console.log(ctx.request.query)
+  ctx.response.body = 'hello world'
+})
+// app.use(userRouter.routes())
+
+// 使用koa-multer解析form-data
+app.use(upload.any())
+
+// koa-bodyparser中间件可以解析json and urlencoded 并把参数放到context.request.body内
+// app.use(bodyParser())
+
+
+app.use((ctx,next) => {
+  // console.log(ctx.request.body)
+  console.log(ctx.req.body) // form-data的参数放在了req.body里
+  ctx.response.body = 'hello register'
+})
+
+app.listen(8000, () => {
+  console.log('koa参数服务器启动成功')
+})
+
+```
+
