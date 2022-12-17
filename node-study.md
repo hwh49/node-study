@@ -1403,3 +1403,102 @@ app.listen(8000, () => {
 
 ```
 
+##### 响应数据
+
+```javascript
+const Koa = require('koa')
+const Router = require('koa-router')
+const app = new Koa()
+const userRouter = new Router({prefix: '/users'})
+userRouter.get('/', (ctx, next) => {
+  // ctx.body = 'hello world'
+  // ctx.body = {
+  //   name: 'hwh',
+  //   age: 18
+  // }
+  ctx.status = 204
+  ctx.body = ['abc', 'cba', 'nba']
+})
+
+
+app.use(userRouter.routes())
+
+app.listen(8000, () => {
+  console.log('koa响应服务器启动成功')
+})
+
+```
+
+##### 错误处理
+
+```javascript
+const Koa = require('koa')
+
+const app = new Koa()
+
+app.use((ctx, next) => {
+  // 调用context的app的emit方法，第一个参数为事件名，第二个参数为错误信息，第三个参数为context
+  ctx.app.emit('error', new Error('错误信息'), ctx)
+})
+app.on('error', (err, ctx) => {
+  console.log(err.message)
+  ctx.body = err.message
+})
+app.listen(8000, () => {
+  console.log('koa错误处理服务器启动成功')
+})
+
+```
+
+### MySQL
+
+为什么需要数据库？任何软件系统都需要存放大量的数据，这些数据通常都是非常复杂和庞大的。
+
+比如包括用户姓名，年龄，性别，地址，商品的信息等等之类的
+
+为什么不把这些数据直接存储到文件里面？文件系统有很多的缺点，比如：很难以合适的方式组织数据
+
+数据库通俗来讲就是一个存储数据的仓库，数据库本质上就是一个软件，一个程序
+
+通常我们将数据库划分为两类：关系型数据库和非关系型数据库
+
+`关系型数据库`
+
+- 关系型数据库通常我们会创建很多和二维数据表
+- 数据表之间相互关联起来，形成一对一，一对多，多对多等关系
+- 之后可以利用SQL语句再多张表中插叙我们所需的数据
+- 支持事务，对数据的访问更加的安全
+
+`非关系型数据库`
+
+- 相当于关系型数据库而言，比较简单一些，存储数据也会更加自由(甚至我们可以直接将一个复杂的json对象直接塞入到数据库中)
+- 是基于key-value的对应关系，并且查询的过程中不需要经过SQL解析，所以性能更高
+- 通常不支持事务，需要再自己的程序中来保证一些原子性的操作
+
+通过官网下载MySQL，windows安装msi版本比较好，mac安装dmg版本。、
+
+安装完成后在终端输入mysql命令是找不到这个命令的，需要手动添加环境变量，或者直接使用mysql的` line Client`
+
+##### windows设置MySQL环境变量
+
+1. 找到设置环境变量的页面后(百度)在`系统变量`选择新建
+2. 创建一个变量名`MYSQL_HOME`，值为mysql的安装地址，例如：`C:\Program Files\MySQL\MySQL Server 5.7`
+3. 选择系统变量里的`Path`，点击编辑，在其界面新建一个变量为`\%MYSQL_HOME%\bin`
+4. 然后输入cmd打开终端，输入mysql --version看看是否配置成功
+
+输入密码登录后，可以通过`show databases;`命令查看默认的数据库
+
+-  infomation_schema：信息数据库，其中包括MySQL在维护的其他数据库、表、 列、访问权限等信息；
+-  performance_schema：性能数据库，记录着MySQL Server数据库引擎在运行 过程中的一些资源消耗相关的信息； 
+- mysql：用于存储数据库管理者的用户信息、权限信息以及一些日志信息等； 
+- sys：相当于是一个简易版的performance_schema，将性能数据库中的数据汇 总成更容易理解的形式；
+
+`终端操作的一些命令`
+
+1. `create database 数据库名`：创建一个数据库
+2. `use 数据库名`：使用指定的数据库
+3. `create table 表名(name varchar(20), age int, height double);`：创建了一张表并且分别有name,age,height三个键，限制值分别为varchar,int，double
+4. `show tables`：查看表
+5. `insert into 表名 (name, age, height) values ('why', 18, 1.88);`往指定的表插入数据
+6. `select * from 表名`：切换到指定的表
+
