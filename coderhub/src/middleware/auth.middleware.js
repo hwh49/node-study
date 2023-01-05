@@ -3,6 +3,7 @@ const errorType = require('../constants/error-types')
 const service = require('../service/user.service')
 const {md5password} = require('../utils/password-handle')
 const {PUBLIC_KEY} = require('../app/config')
+const {checkResource} = require('../service/auth.service')
 
 
 const verifyPassword = async (ctx, next) => {
@@ -51,7 +52,24 @@ const verifyAuth = async (ctx, next) => {
   }
 }
 
+const verifyPermission = async (ctx, next) => {
+  // 1.拿到数据库id和userId
+  const [resourceKey] = Object.keys(ctx.params)
+  const tableName = resourceKey.replace('Id', '')
+  const resourceId = ctx.params[resourceKey]
+  const {id} = ctx.user
+  // 2.查询数据库是否有权限
+  const isPermission = await checkResource(tableName, resourceId, id)
+  if (!isPermission) {
+    const error = new Error(errorType.UNAUTHPREMISSION)
+    return ctx.app.emit('error', error, ctx)
+  }
+  await next()
+}
+
+
 module.exports = {
   verifyPassword,
-  verifyAuth
+  verifyAuth,
+  verifyPermission
 }

@@ -28,6 +28,10 @@ const errorHandle = (error, ctx) => {
       status = 401
       message = '未携带token~'
       break;
+    case errorType.UNAUTHPREMISSION:
+      status = 401
+      message = '没有权限~'
+      break;
     default:
       status = 404
       message = "NOT FOUND"

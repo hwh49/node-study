@@ -4,6 +4,7 @@ const USER_NAME_DOES_NOT_EXIST = 'user name does not exist'
 const PASSWORD_DOES_NOT_EXIST = 'password does not exist'
 const UNAUTHORIZED = 'unauthorized'
 const DID_NOT_CARRY_TOKEN = 'did not carry token'
+const UNAUTHPREMISSION = 'un auth permission'
 
 module.exports = {
   NAME_OR_PASSWORD_IS_REQUIRED,
@@ -11,5 +12,6 @@ module.exports = {
   USER_NAME_DOES_NOT_EXIST,
   PASSWORD_DOES_NOT_EXIST,
   UNAUTHORIZED,
-  DID_NOT_CARRY_TOKEN
+  DID_NOT_CARRY_TOKEN,
+  UNAUTHPREMISSION
 }
