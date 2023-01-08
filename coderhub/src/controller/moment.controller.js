@@ -1,4 +1,15 @@
-const {create, getMomentById, getMomentList, update, remove, hasLabel, addLabel} = require('../service/moment.service')
+const {
+  create,
+  getMomentById,
+  getMomentList,
+  update,
+  remove,
+  hasLabel,
+  addLabel,
+  getFileByFilename
+} = require('../service/moment.service')
+const fs = require('fs')
+const {PICTURE_PATH} = require('../constants/file-path')
 
 class MomentController {
   async create(ctx, next) {
@@ -45,6 +56,18 @@ class MomentController {
     ctx.body = '动态标签创建成功~'
   }
 
+  async fileInfo(ctx, next) {
+    let {filename} = ctx.params;
+    const fileInfo = await getFileByFilename(filename);
+    const {type} = ctx.query;
+    const types = ["small", "middle", "large"];
+    if (types.some(item => item === type)) {
+      filename = filename + '-' + type;
+    }
+
+    ctx.response.set('content-type', fileInfo.mimetype);
+    ctx.body = fs.createReadStream(`${PICTURE_PATH}/${filename}`);
+  }
 
 }
 
